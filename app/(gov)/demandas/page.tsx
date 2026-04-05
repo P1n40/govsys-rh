@@ -1,0 +1,191 @@
+'use client'
+
+import Link from 'next/link'
+import { useMemo, useState } from 'react'
+import { useEffect } from 'react'
+import { listDemandas, type DemandaListItem } from '@/lib/services/govsys'
+import { useGovContext } from '@/components/providers/gov-provider'
+import { AlertTriangle, ChevronRight, Filter, Flame, Search, UserCheck, Users } from 'lucide-react'
+
+export default function DemandasPage() {
+  const { currentUser, canManage } = useGovContext()
+  const [demandas, setDemandas] = useState<DemandaListItem[]>([])
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL')
+  const [viewScope, setViewScope] = useState<'MINE' | 'ALL'>(canManage ? 'ALL' : 'MINE')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  async function carregar() {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await listDemandas(search)
+      setDemandas(data)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erro ao carregar demandas')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    setViewScope(canManage ? 'ALL' : 'MINE')
+  }, [canManage])
+
+  useEffect(() => {
+    void carregar()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const filtradas = useMemo(() => {
+    const statusNormalized = statusFilter.toLowerCase()
+
+    return demandas.filter((d) => {
+      const assigned = Boolean(
+        currentUser && (d.responsavel_id === currentUser.id || d.substituto_id === currentUser.id)
+      )
+
+      const visible = viewScope === 'ALL' ? canManage || assigned : assigned
+      if (!visible) return false
+
+      if (statusFilter === 'ALL') return true
+      if (statusFilter === 'OVERDUE') {
+        if (!d.deadline) return false
+        const overdue = new Date(d.deadline).getTime() < Date.now()
+        return overdue && d.status.toLowerCase() !== 'concluida'
+      }
+
+      return d.status.toLowerCase() === statusNormalized
+    })
+  }, [canManage, currentUser, demandas, statusFilter, viewScope])
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">Gerenciamento de Demandas</h2>
+          <p className="text-slate-500">Replica do app anexado, agora com dados do Supabase.</p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => void carregar()} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Atualizar</button>
+          <Link href="/nova-demanda" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Nova Demanda</Link>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-4 flex flex-wrap gap-2 border-b border-slate-100 pb-4">
+          <button
+            onClick={() => setViewScope('MINE')}
+            className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${viewScope === 'MINE' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'text-slate-600 hover:bg-slate-50'}`}
+          >
+            <UserCheck className="h-4 w-4" />
+            Minhas Demandas
+          </button>
+          {canManage ? (
+            <button
+              onClick={() => setViewScope('ALL')}
+              className={`inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${viewScope === 'ALL' ? 'bg-purple-50 text-purple-700 border border-purple-200' : 'text-slate-600 hover:bg-slate-50'}`}
+            >
+              <Users className="h-4 w-4" />
+              Visao da Equipe
+            </button>
+          ) : null}
+        </div>
+
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+          <div className="relative w-full">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por protocolo/processo/status"
+              className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 outline-none focus:border-blue-500"
+            />
+          </div>
+          <button onClick={() => void carregar()} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium">Buscar</button>
+          <div className="relative">
+            <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="rounded-lg border border-slate-300 py-2 pl-9 pr-3"
+            >
+              <option value="ALL">Todos os status</option>
+              <option value="OVERDUE">SLA estourado</option>
+              <option value="registrada">Registrada</option>
+              <option value="em_andamento">Em andamento</option>
+              <option value="concluida">Concluida</option>
+              <option value="bloqueada">Bloqueada</option>
+            </select>
+          </div>
+        </div>
+
+        {loading ? <p>Carregando demandas...</p> : null}
+        {error ? <p className="text-red-600">{error}</p> : null}
+
+        {!loading && !error ? (
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
+            <table className="w-full min-w-[860px] border-collapse text-left">
+              <thead>
+                <tr className="bg-slate-50 text-xs uppercase text-slate-500">
+                  <th className="border-b border-slate-200 px-4 py-3">Protocolo</th>
+                  <th className="border-b border-slate-200 px-4 py-3">Processo</th>
+                  <th className="border-b border-slate-200 px-4 py-3">Status</th>
+                  <th className="border-b border-slate-200 px-4 py-3">Prazo</th>
+                  <th className="border-b border-slate-200 px-4 py-3 text-right">Acoes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtradas.map((d) => {
+                  const overdue = Boolean(d.deadline && new Date(d.deadline).getTime() < Date.now() && d.status.toLowerCase() !== 'concluida')
+                  const status = d.status.toLowerCase()
+                  const statusClasses =
+                    status === 'concluida'
+                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                      : status === 'bloqueada'
+                        ? 'bg-red-100 text-red-700 border-red-200'
+                        : status === 'em_andamento'
+                          ? 'bg-amber-100 text-amber-800 border-amber-200'
+                          : 'bg-blue-100 text-blue-800 border-blue-200'
+
+                  return (
+                    <tr key={d.id} className={overdue ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-slate-50'}>
+                      <td className="border-b border-slate-100 px-4 py-3 font-mono text-sm font-medium">
+                        {d.protocolo}
+                        {overdue ? <Flame className="ml-2 inline h-4 w-4 text-red-500" /> : null}
+                      </td>
+                      <td className="border-b border-slate-100 px-4 py-3">{d.processo_nome}</td>
+                      <td className="border-b border-slate-100 px-4 py-3">
+                        <span className={`inline-flex rounded-full border px-2 py-1 text-xs font-bold ${statusClasses}`}>
+                          {d.status}
+                        </span>
+                      </td>
+                      <td className="border-b border-slate-100 px-4 py-3">
+                        <div className="inline-flex items-center gap-1">
+                          {overdue ? <AlertTriangle className="h-4 w-4 text-red-500" /> : null}
+                          <span className={overdue ? 'font-semibold text-red-600' : ''}>
+                            {d.deadline ? new Date(d.deadline).toLocaleDateString('pt-BR') : '-'}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="border-b border-slate-100 px-4 py-3 text-right">
+                        <Link href={`/demandas/${d.id}`} className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800">
+                          Abrir <ChevronRight className="h-4 w-4" />
+                        </Link>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+
+        {!loading && !error && filtradas.length === 0 ? (
+          <p className="py-6 text-center text-slate-500">Nenhuma demanda encontrada.</p>
+        ) : null}
+      </div>
+    </div>
+  )
+}
