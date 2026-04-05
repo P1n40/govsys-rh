@@ -23,6 +23,7 @@ import {
   type OriginChannel,
   type ProcessType,
 } from '@/lib/services/governance-local'
+import { getResponsaveisPorProcesso } from '@/lib/services/demandas'
 
 function calcularPrazoISO(slaHours: number): string {
   const date = new Date()
@@ -34,7 +35,7 @@ export default function NovaDemandaPage() {
   const router = useRouter()
   const { currentUser } = useGovContext()
 
-  const [processos, setProcessos] = useState<Processo[]>([])
+  const [processos, setProcessos] = useState<{ id: string; nome: string }[]>([])
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [protocolo, setProtocolo] = useState('')
   const [processoId, setProcessoId] = useState('')
@@ -78,6 +79,34 @@ export default function NovaDemandaPage() {
 
     void load()
   }, [])
+
+  useEffect(() => {
+    if (!processoId) {
+      setResponsavelId('')
+      setSubstitutoId('')
+      return
+    }
+
+    let active = true
+
+    async function fetchResponsaveis() {
+      try {
+        const { principal, secundario } = await getResponsaveisPorProcesso(processoId)
+        if (!active) return
+        setResponsavelId(principal?.id || '')
+        setSubstitutoId(secundario?.id || '')
+      } catch {
+        if (!active) return
+        setResponsavelId('')
+        setSubstitutoId('')
+      }
+    }
+
+    void fetchResponsaveis()
+    return () => {
+      active = false
+    }
+  }, [processoId])
 
   const selectedProcess = useMemo(
     () => processos.find((p) => p.id === processoId) ?? null,

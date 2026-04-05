@@ -138,7 +138,7 @@ export async function listDemandas(search?: string): Promise<DemandaListItem[]> 
       status: String(row.status ?? 'registrada'),
       created_at: getDemandaCreatedAt(row),
       deadline: getDemandaDeadline(row),
-      processo_nome: processoNome ? String(processoNome) : 'Processo nao encontrado',
+      processo_nome: formatProcessoNome(processoNome ? String(processoNome) : 'Processo nao encontrado'),
       responsavel_id: row.responsavel_id ? String(row.responsavel_id) : null,
       substituto_id: row.substituto_id ? String(row.substituto_id) : null,
     }
@@ -184,7 +184,7 @@ export async function getDemandaDetalhe(demandaId: string): Promise<DemandaDetal
     status: String(data.status ?? ''),
     created_at: getDemandaCreatedAt(data as Record<string, unknown>),
     deadline: getDemandaDeadline(data),
-    processo: processo ? { id: String(processo.id), nome: String(processo.nome) } : null,
+    processo: processo ? { id: String(processo.id), nome: formatProcessoNome(String(processo.nome)) } : null,
     responsavel,
     substituto,
   }
@@ -285,7 +285,7 @@ export async function listProcessos(): Promise<Processo[]> {
   const { data, error } = await supabase.from('processos').select('id, nome').order('nome')
   if (error) throw new Error(error.message)
 
-  return (data ?? []).map((p) => ({ id: String(p.id), nome: String(p.nome) }))
+  return (data ?? []).map((p) => ({ id: String(p.id), nome: formatProcessoNome(String(p.nome)) }))
 }
 
 export async function listUsuarios(): Promise<Usuario[]> {
@@ -582,4 +582,38 @@ function getGenericCreatedAt(row: Record<string, unknown>): string | null {
   if (!raw) return null
   const value = String(raw)
   return Number.isNaN(new Date(value).getTime()) ? null : value
+}
+
+function normalizeProcessName(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .trim()
+}
+
+function formatProcessoNome(nome: string): string {
+  const normalized = normalizeProcessName(nome)
+  if (!normalized || normalized === 'PROCESSO NAO ENCONTRADO') return nome
+
+  if (normalized.includes('FP 01') || normalized.includes('ADMIS')) {
+    return 'FP 01 - Admissao de Colaboradores'
+  }
+  if (normalized.includes('FP 02') || normalized.includes('DEMISS') || normalized.includes('DESLIG')) {
+    return 'FP 02 - Demissao / Desligamento'
+  }
+  if (normalized.includes('FP 03') || normalized.includes('ATEND')) {
+    return 'FP 03 - Atendimento ao Colaborador'
+  }
+  if (normalized.includes('FP 04') || normalized.includes('PONTO')) {
+    return 'FP 04 - Ponto e Justificativas Medicas'
+  }
+  if (normalized.includes('FP 05') || normalized.includes('FARD')) {
+    return 'FP 05 - Fardamento e Materiais'
+  }
+  if (normalized.includes('FP 06') || normalized.includes('BENEF')) {
+    return 'FP 06 - Beneficios e Sistemas'
+  }
+
+  return nome
 }

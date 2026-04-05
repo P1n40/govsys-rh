@@ -1,6 +1,19 @@
 import { supabase } from '@/lib/supabase'
 import type { ChecklistItem, Demanda, Etapa, Pendencia, WorkflowRepository, WorkflowSnapshot } from '@/lib/engine/workflow-engine'
 
+export interface Usuario {
+  id: string
+  nome: string
+  email?: string | null
+  perfil?: string | null
+  role?: string | null
+}
+
+export interface Responsaveis {
+  principal: Usuario | null
+  secundario: Usuario | null
+}
+
 export type ExecucaoRegistro = {
   id: string
   demandaId: string
@@ -274,4 +287,80 @@ export const demandasRepository: WorkflowRepository = {
   createPendencia,
   upsertExecucaoEtapa,
   updateDemandaStatus,
+}
+
+function normalizeRoleType(value: unknown): string {
+  return String(value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+}
+
+export async function getResponsaveisPorProcesso(processoId: string): Promise<Responsaveis> {
+  const { data, error } = await supabase
+    .from('responsabilidades')
+    .select('tipo, responsavel_id')
+    .eq('processo_id', processoId)
+    .eq('ativo', true)
+
+  if (error || !data?.length) {
+    return { principal: null, secundario: null }
+  }
+
+  const responsavelIds = Array.from(
+    new Set(
+      (data as Array<Record<string, unknown>>)
+        .map((row) => row.responsavel_id)
+        .filter((value): value is string => Boolean(value))
+        .map((value) => String(value))
+    )
+  )
+
+  if (responsavelIds.length === 0) {
+    return { principal: null, secundario: null }
+  }
+
+  const { data: usuariosData, error: usuariosError } = await supabase
+    .from('usuarios')
+    .select('*')
+    .in('id', responsavelIds)
+
+  if (usuariosError || !usuariosData?.length) {
+    return { principal: null, secundario: null }
+  }
+
+  const usuariosMap = new Map<string, Usuario>()
+  for (const raw of usuariosData as Array<Record<string, unknown>>) {
+    const id = raw.id ? String(raw.id) : ''
+    if (!id) continue
+    usuariosMap.set(id, {
+      id,
+      nome: raw.nome ? String(raw.nome) : id,
+      email: raw.email ? String(raw.email) : null,
+      role: raw.role ? String(raw.role) : raw.perfil ? String(raw.perfil) : null,
+      perfil: raw.perfil ? String(raw.perfil) : null,
+    })
+  }
+
+  let principal: Usuario | null = null
+  let secundario: Usuario | null = null
+
+  for (const row of data as Array<Record<string, unknown>>) {
+    const tipo = normalizeRoleType(row.tipo)
+    const responsavelId = row.responsavel_id ? String(row.responsavel_id) : ''
+    const responsavel = responsavelId ? (usuariosMap.get(responsavelId) ?? null) : null
+    if (!responsavel) continue
+
+    if (!principal && tipo === 'principal') {
+      principal = responsavel
+      continue
+    }
+
+    if (!secundario && (tipo === 'secundario' || tipo === 'substituto')) {
+      secundario = responsavel
+    }
+  }
+
+  return { principal, secundario }
 }
