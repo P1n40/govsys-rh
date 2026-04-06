@@ -617,3 +617,182 @@ function formatProcessoNome(nome: string): string {
 
   return nome
 }
+
+// Função para criar uma nova mensagem
+export type Mensagem = {
+  id: string
+  conteudo: string
+  remetente_id: string
+  destinatario_id: string | null
+  setor_id: string | null
+  demanda_id: string | null
+  created_at: string
+}
+
+export type MensagemAnexo = {
+  id: string
+  mensagem_id: string
+  url: string
+  tipo: string | null
+  created_at: string
+}
+
+const MENSAGERIA_SETUP_HINT =
+  'Infra de mensagens indisponivel. Execute o script sql/create_mensagens.sql no Supabase.'
+
+function getMensagemCreatedAt(row: Record<string, unknown>): string {
+  const raw = row.created_at ?? row.criado_em ?? row.cadastrado_em
+  if (!raw) return new Date().toISOString()
+  const value = String(raw)
+  return Number.isNaN(new Date(value).getTime()) ? new Date().toISOString() : value
+}
+
+function normalizeMessage(value: unknown): string {
+  return String(value ?? '').toLowerCase()
+}
+
+function isMissingTableError(error: { code?: string; message?: string }, table: string): boolean {
+  const msg = normalizeMessage(error.message)
+  const tableName = table.toLowerCase()
+  return (
+    error.code === 'PGRST205' ||
+    msg.includes(`table 'public.${tableName}'`) ||
+    msg.includes(`relation "public.${tableName}" does not exist`) ||
+    msg.includes(`relation public.${tableName} does not exist`)
+  )
+}
+
+export async function criarMensagem({
+  remetenteId,
+  destinatarioId,
+  setorId,
+  demandaId,
+  conteudo,
+}: {
+  remetenteId: string
+  destinatarioId?: string
+  setorId?: string
+  demandaId?: string
+  conteudo: string
+}): Promise<Mensagem> {
+  const { data, error } = await supabase
+    .from('mensagens')
+    .insert({
+      remetente_id: remetenteId,
+      destinatario_id: destinatarioId,
+      setor_id: setorId,
+      demanda_id: demandaId,
+      conteudo,
+    })
+    .select('*')
+    .single()
+
+  if (error || !data) {
+    if (error && isMissingTableError(error, 'mensagens')) {
+      throw new Error(MENSAGERIA_SETUP_HINT)
+    }
+    throw new Error(error?.message ?? 'Erro ao criar mensagem')
+  }
+
+  return {
+    id: String(data.id),
+    conteudo: String(data.conteudo ?? conteudo),
+    remetente_id: String(data.remetente_id ?? remetenteId),
+    destinatario_id: data.destinatario_id ? String(data.destinatario_id) : null,
+    setor_id: data.setor_id ? String(data.setor_id) : null,
+    demanda_id: data.demanda_id ? String(data.demanda_id) : null,
+    created_at: getMensagemCreatedAt(data as Record<string, unknown>),
+  }
+}
+
+export async function listarMensagens(filtros: {
+  demandaId?: string
+  setorId?: string
+  destinatarioId?: string
+}): Promise<Mensagem[]> {
+  const { demandaId, setorId, destinatarioId } = filtros
+  let query = supabase.from('mensagens').select('*')
+
+  if (demandaId) query = query.eq('demanda_id', demandaId)
+  if (setorId) query = query.eq('setor_id', setorId)
+  if (destinatarioId) query = query.eq('destinatario_id', destinatarioId)
+
+  const { data, error } = await query
+
+  if (error) {
+    if (isMissingTableError(error, 'mensagens')) {
+      throw new Error(MENSAGERIA_SETUP_HINT)
+    }
+    throw new Error(error.message)
+  }
+
+  return ((data ?? []) as Array<Record<string, unknown>>)
+    .map((row) => ({
+      id: String(row.id),
+      conteudo: String(row.conteudo ?? ''),
+      remetente_id: String(row.remetente_id ?? ''),
+      destinatario_id: row.destinatario_id ? String(row.destinatario_id) : null,
+      setor_id: row.setor_id ? String(row.setor_id) : null,
+      demanda_id: row.demanda_id ? String(row.demanda_id) : null,
+      created_at: getMensagemCreatedAt(row),
+    }))
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+}
+
+export async function listarAnexosPorMensagens(mensagemIds: string[]): Promise<MensagemAnexo[]> {
+  if (mensagemIds.length === 0) return []
+
+  const { data, error } = await supabase
+    .from('anexos_mensagens')
+    .select('*')
+    .in('mensagem_id', mensagemIds)
+
+  if (error) {
+    if (isMissingTableError(error, 'anexos_mensagens')) {
+      throw new Error(MENSAGERIA_SETUP_HINT)
+    }
+    throw new Error(error.message)
+  }
+
+  return ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
+    id: String(row.id),
+    mensagem_id: String(row.mensagem_id),
+    url: String(row.url ?? ''),
+    tipo: row.tipo ? String(row.tipo) : null,
+    created_at: getMensagemCreatedAt(row),
+  }))
+}
+
+export async function anexarArquivoMensagem({
+  mensagemId,
+  arquivo,
+}: {
+  mensagemId: string
+  arquivo: File
+}) {
+  const safeName = arquivo.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+  const storagePath = `mensagens/${mensagemId}/${Date.now()}-${safeName}`
+  const { data, error } = await supabase.storage.from('anexos').upload(storagePath, arquivo)
+  if (error) {
+    const msg = normalizeMessage(error.message)
+    if (msg.includes('bucket') && msg.includes('not found')) {
+      throw new Error(`${MENSAGERIA_SETUP_HINT} Bucket "anexos" tambem precisa existir.`)
+    }
+    throw new Error(error.message)
+  }
+
+  const url = data?.path
+  const { error: dbError } = await supabase.from('anexos_mensagens').insert({
+    mensagem_id: mensagemId,
+    url,
+    tipo: arquivo.type,
+  })
+
+  if (dbError) {
+    if (isMissingTableError(dbError, 'anexos_mensagens')) {
+      throw new Error(MENSAGERIA_SETUP_HINT)
+    }
+    throw new Error(dbError.message)
+  }
+  return url
+}

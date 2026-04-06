@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Mensagem {
+  id            String         @id @default(uuid())
+  remetenteId   String         @map("remetente_id")
+  destinatarioId String?       @map("destinatario_id")
+  setorId       String?        @map("setor_id")
+  demandaId     String?        @map("demanda_id")
+  conteudo      String
+  criadoEm      DateTime       @default(now()) @map("criado_em")
+  anexos        AnexoMensagem[]
+
+  @@map("mensagens")
+}
+
+model AnexoMensagem {
+  id         String   @id @default(uuid())
+  mensagemId String   @map("mensagem_id")
+  url        String
+  tipo       String?
+  criadoEm   DateTime @default(now()) @map("criado_em")
+  mensagem   Mensagem @relation(fields: [mensagemId], references: [id], onDelete: Cascade)
+
+  @@map("anexos_mensagens")
+}

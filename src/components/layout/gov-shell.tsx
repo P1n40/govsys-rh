@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { FileText, LayoutDashboard, PlusCircle, Users, BarChart3, ShieldCheck, UserCircle, Menu, X, LogOut } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
+import { FileText, LayoutDashboard, PlusCircle, Users, BarChart3, ShieldCheck, UserCircle, Menu, X, LogOut, MessagesSquare } from 'lucide-react'
 import type { ComponentType, ReactNode } from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useGovContext } from '@/components/providers/gov-provider'
+import { MANAGER_ROLES } from '@/lib/services/govsys'
 
 type NavItem = {
   href: string
@@ -17,15 +18,40 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/demandas', label: 'Demandas', icon: FileText },
   { href: '/nova-demanda', label: 'Nova Demanda', icon: PlusCircle },
+  { href: '/mensagens', label: 'Mensagens', icon: MessagesSquare },
   { href: '/relatorios', label: 'Relatorios', icon: BarChart3 },
   { href: '/equipe', label: 'Gestao de Equipe', icon: Users },
 ]
 
+const LIMITED_NAV_ITEMS: NavItem[] = [
+  { href: '/demandas', label: 'Demandas', icon: FileText },
+  { href: '/nova-demanda', label: 'Nova Demanda', icon: PlusCircle },
+  { href: '/mensagens', label: 'Mensagens', icon: MessagesSquare },
+]
+
 export default function GovShell({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const { currentUser, switchUser } = useGovContext()
+  const router = useRouter()
+  const { currentUser, switchUser, loadingUsers } = useGovContext()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const navItems = NAV_ITEMS
+  const isBelowSupervisor = Boolean(currentUser?.role && !MANAGER_ROLES.includes(currentUser.role))
+  const navItems = isBelowSupervisor ? LIMITED_NAV_ITEMS : NAV_ITEMS
+
+  useEffect(() => {
+    if (loadingUsers || !isBelowSupervisor || !pathname) return
+
+    const allowed =
+      pathname === '/demandas' ||
+      pathname.startsWith('/demandas/') ||
+      pathname === '/nova-demanda' ||
+      pathname.startsWith('/nova-demanda/') ||
+      pathname === '/mensagens' ||
+      pathname.startsWith('/mensagens/')
+
+    if (!allowed) {
+      router.replace('/demandas')
+    }
+  }, [isBelowSupervisor, loadingUsers, pathname, router])
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 lg:flex">
