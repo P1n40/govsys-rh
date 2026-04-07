@@ -288,6 +288,46 @@ export async function listProcessos(): Promise<Processo[]> {
   return (data ?? []).map((p) => ({ id: String(p.id), nome: formatProcessoNome(String(p.nome)) }))
 }
 
+export async function criarProcesso(nome: string): Promise<Processo> {
+  const value = nome.trim()
+  if (!value) throw new Error('Nome do processo e obrigatorio.')
+
+  const { data, error } = await supabase
+    .from('processos')
+    .insert({ nome: value })
+    .select('id, nome')
+    .single()
+
+  if (error || !data) throw new Error(error?.message ?? 'Nao foi possivel criar processo.')
+  return { id: String(data.id), nome: formatProcessoNome(String(data.nome)) }
+}
+
+export async function atualizarProcesso(processoId: string, nome: string): Promise<Processo> {
+  const value = nome.trim()
+  if (!value) throw new Error('Nome do processo e obrigatorio.')
+
+  const { data, error } = await supabase
+    .from('processos')
+    .update({ nome: value })
+    .eq('id', processoId)
+    .select('id, nome')
+    .single()
+
+  if (error || !data) throw new Error(error?.message ?? 'Nao foi possivel atualizar processo.')
+  return { id: String(data.id), nome: formatProcessoNome(String(data.nome)) }
+}
+
+export async function excluirProcesso(processoId: string): Promise<void> {
+  const { error } = await supabase.from('processos').delete().eq('id', processoId)
+  if (error) {
+    const code = (error as { code?: string }).code
+    if (code === '23503') {
+      throw new Error('Processo possui vinculos (demandas/etapas/responsabilidades) e nao pode ser excluido.')
+    }
+    throw new Error(error.message)
+  }
+}
+
 export async function listUsuarios(): Promise<Usuario[]> {
   const { data, error } = await supabase.from('usuarios').select('*').order('nome')
   if (error) throw new Error(error.message)
@@ -656,9 +696,9 @@ function isMissingTableError(error: { code?: string; message?: string }, table: 
   const tableName = table.toLowerCase()
   return (
     error.code === 'PGRST205' ||
-    msg.includes(`table 'public.${tableName}'`) ||
-    msg.includes(`relation "public.${tableName}" does not exist`) ||
-    msg.includes(`relation public.${tableName} does not exist`)
+    msg.includes("table 'public." + tableName + "'") ||
+    msg.includes('relation "public.' + tableName + '" does not exist') ||
+    msg.includes('relation public.' + tableName + ' does not exist')
   )
 }
 
