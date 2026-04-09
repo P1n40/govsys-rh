@@ -336,13 +336,13 @@ export default function NovaDemandaPage() {
   }
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-slate-900">Nova Demanda</h2>
         <p className="text-slate-500">Cadastro operacional conectado ao Supabase.</p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+      <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 sm:p-5">
         {effectiveProcessType === 'FP03_ATENDIMENTO' ? (
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-900">
             <p className="font-semibold">Axioma de Registro (FP 03):</p>
@@ -378,7 +378,7 @@ export default function NovaDemandaPage() {
 
         <div>
           <label className="mb-1 block text-sm font-medium text-slate-700">Protocolo</label>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <input
               value={protocolo}
               onChange={(e) => {
@@ -392,7 +392,7 @@ export default function NovaDemandaPage() {
               type="button"
               onClick={() => void gerarProtocoloUnico()}
               disabled={generatingProtocol || saving}
-              className="shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-60"
+              className="w-full shrink-0 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-60 sm:w-auto"
             >
               {generatingProtocol ? 'Gerando...' : 'Gerar novo'}
             </button>
@@ -501,7 +501,7 @@ export default function NovaDemandaPage() {
           <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Tipo de Documento</label>
-              <div className="flex gap-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
                 <label className="flex items-center gap-2 text-sm">
                   <input type="radio" name="absency_type" value="ATESTADO" checked={absencyType === 'ATESTADO'} onChange={(e) => setAbsencyType(e.target.value)} />
                   Atestado (Abono de Dias)
@@ -592,7 +592,7 @@ export default function NovaDemandaPage() {
 
         {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
-        <button type="submit" disabled={saving} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">
+        <button type="submit" disabled={saving} className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60 sm:w-auto">
           {saving ? 'Salvando...' : 'Criar demanda'}
         </button>
       </form>

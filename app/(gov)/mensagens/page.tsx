@@ -218,7 +218,7 @@ export default function MensagensPage() {
 
           <div>
             <label className="mb-1 block text-sm font-medium text-slate-700">Anexos</label>
-            <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+            <label className="inline-flex w-full cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 sm:w-auto">
               <Paperclip className="h-4 w-4" />
               Selecionar arquivos
               <input
@@ -243,7 +243,7 @@ export default function MensagensPage() {
           <button
             type="submit"
             disabled={sending || !mensageriaDisponivel}
-            className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60 sm:w-auto"
           >
             <Send className="h-4 w-4" />
             {sending ? 'Enviando...' : 'Enviar mensagem'}
@@ -265,7 +265,7 @@ export default function MensagensPage() {
                     : 'border-slate-200 bg-slate-50'
                 }`}
               >
-                <div className="mb-1 flex items-center gap-2 text-xs text-slate-500">
+                <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                   <UserRound className="h-3.5 w-3.5" />
                   <span className="font-semibold text-slate-700">{mensagem.remetenteNome}</span>
                   <span>-</span>

@@ -60,6 +60,14 @@ export default function DemandasPage() {
     })
   }, [canManage, currentUser, demandas, statusFilter, viewScope])
 
+  function getStatusClasses(statusValue: string): string {
+    const status = statusValue.toLowerCase()
+    if (status === 'concluida') return 'bg-emerald-100 text-emerald-800 border-emerald-200'
+    if (status === 'bloqueada') return 'bg-red-100 text-red-700 border-red-200'
+    if (status === 'em_andamento') return 'bg-amber-100 text-amber-800 border-amber-200'
+    return 'bg-blue-100 text-blue-800 border-blue-200'
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -67,9 +75,9 @@ export default function DemandasPage() {
           <h2 className="text-2xl font-bold text-slate-900">Gerenciamento de Demandas</h2>
           <p className="text-slate-500">Replica do app anexado, agora com dados do Supabase.</p>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => void carregar()} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Atualizar</button>
-          <Link href="/nova-demanda" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">Nova Demanda</Link>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <button onClick={() => void carregar()} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:w-auto">Atualizar</button>
+          <Link href="/nova-demanda" className="w-full rounded-lg bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white hover:bg-blue-700 sm:w-auto">Nova Demanda</Link>
         </div>
       </div>
 
@@ -103,13 +111,13 @@ export default function DemandasPage() {
               className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 outline-none focus:border-blue-500"
             />
           </div>
-          <button onClick={() => void carregar()} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium">Buscar</button>
-          <div className="relative">
+          <button onClick={() => void carregar()} className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium sm:w-auto">Buscar</button>
+          <div className="relative w-full sm:w-auto">
             <Filter className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-lg border border-slate-300 py-2 pl-9 pr-3"
+              className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 sm:min-w-48"
             >
               <option value="ALL">Todos os status</option>
               <option value="OVERDUE">SLA estourado</option>
@@ -125,61 +133,78 @@ export default function DemandasPage() {
         {error ? <p className="text-red-600">{error}</p> : null}
 
         {!loading && !error ? (
-          <div className="overflow-x-auto rounded-lg border border-slate-200">
-            <table className="w-full min-w-[860px] border-collapse text-left">
-              <thead>
-                <tr className="bg-slate-50 text-xs uppercase text-slate-500">
-                  <th className="border-b border-slate-200 px-4 py-3">Protocolo</th>
-                  <th className="border-b border-slate-200 px-4 py-3">Processo</th>
-                  <th className="border-b border-slate-200 px-4 py-3">Status</th>
-                  <th className="border-b border-slate-200 px-4 py-3">Prazo</th>
-                  <th className="border-b border-slate-200 px-4 py-3 text-right">Acoes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtradas.map((d) => {
-                  const overdue = Boolean(d.deadline && new Date(d.deadline).getTime() < Date.now() && d.status.toLowerCase() !== 'concluida')
-                  const status = d.status.toLowerCase()
-                  const statusClasses =
-                    status === 'concluida'
-                      ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
-                      : status === 'bloqueada'
-                        ? 'bg-red-100 text-red-700 border-red-200'
-                        : status === 'em_andamento'
-                          ? 'bg-amber-100 text-amber-800 border-amber-200'
-                          : 'bg-blue-100 text-blue-800 border-blue-200'
+          <>
+            <div className="space-y-3 md:hidden">
+              {filtradas.map((d) => {
+                const overdue = Boolean(d.deadline && new Date(d.deadline).getTime() < Date.now() && d.status.toLowerCase() !== 'concluida')
+                return (
+                  <article key={`card-${d.id}`} className={`rounded-lg border p-3 ${overdue ? 'border-red-200 bg-red-50/50' : 'border-slate-200 bg-white'}`}>
+                    <p className="font-mono text-sm font-semibold text-slate-800 break-all">{d.protocolo}</p>
+                    <p className="mt-1 text-sm text-slate-700">{d.processo_nome}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className={`inline-flex rounded-full border px-2 py-1 text-xs font-bold ${getStatusClasses(d.status)}`}>
+                        {d.status}
+                      </span>
+                      <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs ${overdue ? 'border-red-200 bg-red-50 font-semibold text-red-700' : 'border-slate-200 bg-slate-50 text-slate-600'}`}>
+                        {overdue ? <AlertTriangle className="h-3.5 w-3.5" /> : null}
+                        {d.deadline ? new Date(d.deadline).toLocaleDateString('pt-BR') : '-'}
+                      </span>
+                    </div>
+                    <Link href={`/demandas/${d.id}`} className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-blue-600 hover:text-blue-800">
+                      Abrir <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </article>
+                )
+              })}
+            </div>
 
-                  return (
-                    <tr key={d.id} className={overdue ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-slate-50'}>
-                      <td className="border-b border-slate-100 px-4 py-3 font-mono text-sm font-medium">
-                        {d.protocolo}
-                        {overdue ? <Flame className="ml-2 inline h-4 w-4 text-red-500" /> : null}
-                      </td>
-                      <td className="border-b border-slate-100 px-4 py-3">{d.processo_nome}</td>
-                      <td className="border-b border-slate-100 px-4 py-3">
-                        <span className={`inline-flex rounded-full border px-2 py-1 text-xs font-bold ${statusClasses}`}>
-                          {d.status}
-                        </span>
-                      </td>
-                      <td className="border-b border-slate-100 px-4 py-3">
-                        <div className="inline-flex items-center gap-1">
-                          {overdue ? <AlertTriangle className="h-4 w-4 text-red-500" /> : null}
-                          <span className={overdue ? 'font-semibold text-red-600' : ''}>
-                            {d.deadline ? new Date(d.deadline).toLocaleDateString('pt-BR') : '-'}
+            <div className="hidden overflow-x-auto rounded-lg border border-slate-200 md:block">
+              <table className="w-full min-w-[860px] border-collapse text-left">
+                <thead>
+                  <tr className="bg-slate-50 text-xs uppercase text-slate-500">
+                    <th className="border-b border-slate-200 px-4 py-3">Protocolo</th>
+                    <th className="border-b border-slate-200 px-4 py-3">Processo</th>
+                    <th className="border-b border-slate-200 px-4 py-3">Status</th>
+                    <th className="border-b border-slate-200 px-4 py-3">Prazo</th>
+                    <th className="border-b border-slate-200 px-4 py-3 text-right">Acoes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtradas.map((d) => {
+                    const overdue = Boolean(d.deadline && new Date(d.deadline).getTime() < Date.now() && d.status.toLowerCase() !== 'concluida')
+
+                    return (
+                      <tr key={d.id} className={overdue ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-slate-50'}>
+                        <td className="border-b border-slate-100 px-4 py-3 font-mono text-sm font-medium">
+                          {d.protocolo}
+                          {overdue ? <Flame className="ml-2 inline h-4 w-4 text-red-500" /> : null}
+                        </td>
+                        <td className="border-b border-slate-100 px-4 py-3">{d.processo_nome}</td>
+                        <td className="border-b border-slate-100 px-4 py-3">
+                          <span className={`inline-flex rounded-full border px-2 py-1 text-xs font-bold ${getStatusClasses(d.status)}`}>
+                            {d.status}
                           </span>
-                        </div>
-                      </td>
-                      <td className="border-b border-slate-100 px-4 py-3 text-right">
-                        <Link href={`/demandas/${d.id}`} className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800">
-                          Abrir <ChevronRight className="h-4 w-4" />
-                        </Link>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                        <td className="border-b border-slate-100 px-4 py-3">
+                          <div className="inline-flex items-center gap-1">
+                            {overdue ? <AlertTriangle className="h-4 w-4 text-red-500" /> : null}
+                            <span className={overdue ? 'font-semibold text-red-600' : ''}>
+                              {d.deadline ? new Date(d.deadline).toLocaleDateString('pt-BR') : '-'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="border-b border-slate-100 px-4 py-3 text-right">
+                          <Link href={`/demandas/${d.id}`} className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800">
+                            Abrir <ChevronRight className="h-4 w-4" />
+                          </Link>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : null}
 
         {!loading && !error && filtradas.length === 0 ? (

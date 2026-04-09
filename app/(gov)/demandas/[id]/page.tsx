@@ -356,9 +356,9 @@ export default function DemandaDetalhePage() {
             <h3 className="text-lg font-bold text-slate-900">Override Gerencial</h3>
             <div className="mt-3 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-800">{overrideViolations.map((v) => <p key={v}>- {v}</p>)}</div>
             <textarea value={overrideReason} onChange={(e) => setOverrideReason(e.target.value)} className="mt-3 h-28 w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="Justificativa obrigatoria" />
-            <div className="mt-4 flex gap-2">
-              <button onClick={() => setShowOverride(false)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">Cancelar</button>
-              <button onClick={() => void onConfirmOverride()} className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white">Confirmar override</button>
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row">
+              <button onClick={() => setShowOverride(false)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:w-auto">Cancelar</button>
+              <button onClick={() => void onConfirmOverride()} className="w-full rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white sm:w-auto">Confirmar override</button>
             </div>
           </div>
         </div>
@@ -369,9 +369,9 @@ export default function DemandaDetalhePage() {
           <div className="w-full max-w-lg rounded-xl bg-white p-5">
             <h3 className="text-lg font-bold text-slate-900">Cancelar Demanda</h3>
             <textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} className="mt-3 h-28 w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="Motivo detalhado do cancelamento" />
-            <div className="mt-4 flex gap-2">
-              <button onClick={() => setShowCancel(false)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">Fechar</button>
-              <button onClick={() => void onCancelDemanda()} className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white">Confirmar cancelamento</button>
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row">
+              <button onClick={() => setShowCancel(false)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:w-auto">Fechar</button>
+              <button onClick={() => void onCancelDemanda()} className="w-full rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white sm:w-auto">Confirmar cancelamento</button>
             </div>
           </div>
         </div>
@@ -392,9 +392,9 @@ export default function DemandaDetalhePage() {
               <select value={derivedSubstitutoId} onChange={(e) => setDerivedSubstitutoId(e.target.value)} className="rounded-lg border border-slate-300 px-3 py-2"><option value="">Substituto</option>{allUsuarios.filter((u) => u.id !== derivedResponsavelId).map((u) => <option key={u.id} value={u.id}>{u.nome} ({u.role})</option>)}</select>
             </div>
             <textarea value={derivedReason} onChange={(e) => setDerivedReason(e.target.value)} className="mt-3 h-24 w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="Justificativa da derivacao" />
-            <div className="mt-4 flex gap-2">
-              <button onClick={() => setShowDerived(false)} className="rounded-lg border border-slate-300 px-3 py-2 text-sm">Cancelar</button>
-              <button onClick={() => void onCriarDerivada()} className="rounded-lg bg-purple-600 px-3 py-2 text-sm font-semibold text-white">Criar derivada</button>
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row">
+              <button onClick={() => setShowDerived(false)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:w-auto">Cancelar</button>
+              <button onClick={() => void onCriarDerivada()} className="w-full rounded-lg bg-purple-600 px-3 py-2 text-sm font-semibold text-white sm:w-auto">Criar derivada</button>
             </div>
           </div>
         </div>
@@ -404,7 +404,7 @@ export default function DemandaDetalhePage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <Link href="/demandas" className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900"><ArrowLeft className="h-4 w-4" />Voltar para demandas</Link>
-            <h2 className="text-2xl font-bold text-slate-900">Demanda {demanda.protocolo}</h2>
+            <h2 className="break-words text-2xl font-bold text-slate-900">Demanda {demanda.protocolo}</h2>
             <p className="mt-1 text-slate-600">Processo: <strong>{processoLabel}</strong></p>
             <p className="text-sm text-slate-500">Responsavel: {demanda.responsavel?.nome ?? 'Nao vinculado'} | Substituto: {demanda.substituto?.nome ?? 'Nao vinculado'}</p>
           </div>
@@ -414,15 +414,15 @@ export default function DemandaDetalhePage() {
             {strictSLA ? <span className="rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700">SLA rigido ativo</span> : null}
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <button disabled={saving} onClick={() => setShowDerived(true)} className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60">Criar Demanda Derivada Manual</button>
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          <button disabled={saving} onClick={() => setShowDerived(true)} className="w-full rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60 sm:w-auto">Criar Demanda Derivada Manual</button>
           {statusNorm.includes('bloqueada') ? (
-            <button disabled={saving || !managerAccess} onClick={async () => { setSaving(true); try { await atualizarStatusDemanda(demanda.id, 'em_andamento'); await logAction('DEMANDA_DESBLOQUEADA', 'Desbloqueio manual por perfil gerencial.'); await carregarTudo() } finally { setSaving(false) } }} className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 disabled:opacity-60">Desbloquear Processo</button>
+            <button disabled={saving || !managerAccess} onClick={async () => { setSaving(true); try { await atualizarStatusDemanda(demanda.id, 'em_andamento'); await logAction('DEMANDA_DESBLOQUEADA', 'Desbloqueio manual por perfil gerencial.'); await carregarTudo() } finally { setSaving(false) } }} className="w-full rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 disabled:opacity-60 sm:w-auto">Desbloquear Processo</button>
           ) : (
-            <button disabled={saving || !managerAccess} onClick={() => void onBloquearDemanda()} className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 disabled:opacity-60">Bloquear Processo</button>
+            <button disabled={saving || !managerAccess} onClick={() => void onBloquearDemanda()} className="w-full rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900 disabled:opacity-60 sm:w-auto">Bloquear Processo</button>
           )}
-          <button disabled={saving} onClick={() => void onConcluir(false)} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60">Concluir Demanda</button>
-          <button disabled={saving} onClick={() => setShowCancel(true)} className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">Cancelar Demanda</button>
+          <button disabled={saving} onClick={() => void onConcluir(false)} className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60 sm:w-auto">Concluir Demanda</button>
+          <button disabled={saving} onClick={() => setShowCancel(true)} className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60 sm:w-auto">Cancelar Demanda</button>
         </div>
       </section>
 

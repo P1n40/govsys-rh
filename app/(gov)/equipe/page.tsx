@@ -1057,7 +1057,8 @@ export default function EquipePage() {
           </p>
         ) : null}
 
-        <div className="overflow-x-auto rounded-lg border border-slate-200">
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
           <table className="w-full min-w-[760px] border-collapse">
             <thead>
               <tr>
@@ -1104,6 +1105,7 @@ export default function EquipePage() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
 
         {editorProcesso ? (
@@ -1373,7 +1375,8 @@ export default function EquipePage() {
           </p>
         ) : null}
 
-        <div className="overflow-x-auto rounded-lg border border-slate-200">
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <div className="overflow-x-auto rounded-lg border border-slate-200">
           <table className="w-full min-w-[900px] border-collapse">
             <thead>
               <tr>
@@ -1497,6 +1500,7 @@ export default function EquipePage() {
               })}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
@@ -1504,7 +1508,7 @@ export default function EquipePage() {
         <h3 className="mb-3 text-lg font-semibold text-slate-900">Usuarios Cadastrados</h3>
         <ul className="divide-y divide-slate-100">
           {usuarios.map((u) => (
-            <li key={u.id} className="flex items-center justify-between py-3">
+            <li key={u.id} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
               {editingUserId === u.id ? (
                 <div className="w-full space-y-3 rounded-lg border border-blue-200 bg-blue-50 p-3">
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -1542,7 +1546,7 @@ export default function EquipePage() {
                     />
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <button
                       type="button"
                       onClick={() => void onSaveEdit(u.id)}
@@ -1571,7 +1575,7 @@ export default function EquipePage() {
                     <p className="text-[11px] text-slate-400">ID: {u.id}</p>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                     <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700">
                       {ROLE_LABELS[u.role]}
                     </span>

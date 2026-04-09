@@ -54,7 +54,7 @@ export default function GovShell({ children }: { children: ReactNode }) {
   }, [isBelowSupervisor, loadingUsers, pathname, router])
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 lg:flex">
+    <div className="min-h-screen overflow-x-hidden bg-slate-50 text-slate-900 lg:flex">
       {isMobileMenuOpen ? (
         <div
           className="fixed inset-0 z-30 bg-slate-900/50 lg:hidden"
@@ -120,20 +120,21 @@ export default function GovShell({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="w-full lg:ml-0">
-        <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:px-8">
+        <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-3 py-3 backdrop-blur sm:px-4 lg:px-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button className="lg:hidden" onClick={() => setIsMobileMenuOpen(true)}>
                 <Menu className="h-6 w-6 text-slate-600" />
               </button>
-              <p className="text-sm text-slate-600">Todas as acoes sao monitoradas e auditaveis.</p>
+              <p className="hidden text-sm text-slate-600 sm:block">Todas as acoes sao monitoradas e auditaveis.</p>
+              <p className="text-xs text-slate-500 sm:hidden">Acoes auditaveis</p>
             </div>
-            <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+            <span className="hidden rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 sm:inline-flex">
               Sistema Operacional
             </span>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-7xl p-4 lg:p-8">{children}</main>
+        <main className="mx-auto w-full max-w-7xl p-3 sm:p-4 lg:p-8">{children}</main>
       </div>
     </div>
   )

@@ -62,20 +62,20 @@ export default function RelatoriosPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h2 className="text-2xl font-bold text-slate-900">Relatorios & Auditoria</h2>
           <p className="text-slate-500">Centro de inteligencia e logs do sistema.</p>
         </div>
         {activeTab === 'REPORTS' ? (
-          <div className="flex gap-2">
-            <button onClick={() => alert(`Exportando PDF com ${filteredRows.length} registros (simulacao)`) } className="rounded-lg border border-slate-300 px-3 py-2 text-sm">Exportar PDF</button>
-            <button onClick={() => alert(`Exportando Excel com ${filteredRows.length} registros (simulacao)`) } className="rounded-lg border border-slate-300 px-3 py-2 text-sm">Exportar Excel</button>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            <button onClick={() => alert(`Exportando PDF com ${filteredRows.length} registros (simulacao)`) } className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:w-auto">Exportar PDF</button>
+            <button onClick={() => alert(`Exportando Excel com ${filteredRows.length} registros (simulacao)`) } className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm sm:w-auto">Exportar Excel</button>
           </div>
         ) : null}
       </div>
 
-      <div className="flex gap-4 border-b border-slate-200 pb-1">
+      <div className="-mx-1 flex gap-2 overflow-x-auto border-b border-slate-200 px-1 pb-1 sm:gap-4">
         <button onClick={() => setActiveTab('REPORTS')} className={`border-b-2 px-3 pb-2 text-sm font-medium ${activeTab === 'REPORTS' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500'}`}>Relatorios</button>
         <button onClick={() => setActiveTab('LOGS')} className={`border-b-2 px-3 pb-2 text-sm font-medium ${activeTab === 'LOGS' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-500'}`}>Logs</button>
       </div>
@@ -117,8 +117,8 @@ export default function RelatoriosPage() {
           <div className="rounded-xl border border-slate-200 bg-white">
             {loading ? <p className="p-4">Carregando...</p> : null}
             {!loading ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
+              <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+                <table className="w-full min-w-[640px] text-left text-sm">
                   <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                     <tr>
                       <th className="px-4 py-3">Protocolo</th>
@@ -150,7 +150,7 @@ export default function RelatoriosPage() {
         </>
       ) : (
         <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <div className="mb-4 flex gap-2">
+          <div className="mb-4 flex flex-wrap gap-2">
             <button onClick={() => setLogFilter('ALL')} className={`rounded-full border px-3 py-1 text-xs font-bold ${logFilter === 'ALL' ? 'bg-slate-800 text-white border-slate-800' : 'text-slate-600 border-slate-300'}`}>All</button>
             <button onClick={() => setLogFilter('CRITICAL')} className={`rounded-full border px-3 py-1 text-xs font-bold ${logFilter === 'CRITICAL' ? 'bg-red-600 text-white border-red-600' : 'text-red-600 border-red-300'}`}>Critical</button>
           </div>
